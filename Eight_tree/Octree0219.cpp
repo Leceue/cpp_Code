@@ -17,6 +17,9 @@ using namespace std;
 
 int s = 0;
 // Structure of a point
+int Tr_level = 0;
+//总层数
+
 struct Point
 {
     double x;
@@ -104,12 +107,13 @@ public:
             children[i] = new Octree();
     }
 
-    void Children_tree_make(int pos)
+    void Children_tree_make(int pos, int now_level)
     {
         double midx = (topLeftFront->x + bottomRightBack->x) / 2;
         double midy = (topLeftFront->y + bottomRightBack->y) / 2;
         double midz = (topLeftFront->z + bottomRightBack->z) / 2;
         children[pos]->children.assign(8, nullptr);
+        children[pos]->level = now_level+1;
         for (int i = TopLeftFront; i <= BottomLeftBack; ++i)
             children[pos]->children[i] = new Octree();
         if (pos == TopLeftFront)
@@ -210,8 +214,8 @@ public:
         {
             Octree *now = children[pos];
             Children_tree_make(pos,level);//构造pos的子树
+            Tr_level = max(Tr_level, level+1);
             int i = 0;
-            level++;
             // std::cout << Parent_Points.size() << std::endl;
             // 把之前存储的节点数逐个插入到子节点，之前全在父节点，并删除
             while (i < now->Parent_Points.size())
@@ -221,104 +225,6 @@ public:
                 pos = now->getIndex(now->Parent_Points[i].x, now->Parent_Points[i].y, now->Parent_Points[i].z);
                 now->children[pos]->Parent_Points.push_back(now->Parent_Points[i]);
                 i++;
-                // if (pos != -1)
-                // {
-                //     // if (now->children[pos]->Parent_Points.size() == 0)
-                //     // {
-                //     //     // 开始划分子节点
-                //     //     double midx = (topLeftFront->x + bottomRightBack->x) / 2;
-                //     //     double midy = (topLeftFront->y + bottomRightBack->y) / 2;
-                //     //     double midz = (topLeftFront->z + bottomRightBack->z) / 2;
-                //     //     if (pos == TopLeftFront)
-                //     //     {
-                //     //         now->children[pos] = new Octree(topLeftFront->x,
-                //     //                                         topLeftFront->y,
-                //     //                                         topLeftFront->z,
-                //     //                                         midx,
-                //     //                                         midy,
-                //     //                                         midz);
-                //     //     }
-                //     //     else if (pos == TopRightFront)
-                //     //     {
-                //     //         now->children[pos] = new Octree(midx,
-                //     //                                         topLeftFront->y,
-                //     //                                         topLeftFront->z,
-                //     //                                         bottomRightBack->x,
-                //     //                                         midy,
-                //     //                                         midz);
-                //     //     }
-                //     //     else if (pos == BottomRightFront)
-                //     //     {
-                //     //         now->children[pos] = new Octree(midx,
-                //     //                                         midy,
-                //     //                                         topLeftFront->z,
-                //     //                                         bottomRightBack->x,
-                //     //                                         bottomRightBack->y,
-                //     //                                         midz);
-                //     //     }
-                //     //     else if (pos == BottomLeftFront)
-                //     //     {
-                //     //         now->children[pos] = new Octree(topLeftFront->x,
-                //     //                                         midy,
-                //     //                                         topLeftFront->z,
-                //     //                                         midx,
-                //     //                                         bottomRightBack->y,
-                //     //                                         midz);
-                //     //     }
-                //     //     else if (pos == TopLeftBottom)
-                //     //     {
-                //     //         now->children[pos] = new Octree(topLeftFront->x,
-                //     //                                         topLeftFront->y,
-                //     //                                         midz,
-                //     //                                         midx,
-                //     //                                         midy,
-                //     //                                         bottomRightBack->z);
-                //     //     }
-                //     //     else if (pos == TopRightBottom)
-                //     //     {
-                //     //         now->children[pos] = new Octree(midx,
-                //     //                                         topLeftFront->y,
-                //     //                                         midz,
-                //     //                                         bottomRightBack->x,
-                //     //                                         midy,
-                //     //                                         bottomRightBack->z);
-                //     //     }
-                //     //     else if (pos == BottomRightBack)
-                //     //     {
-                //     //         now->children[pos] = new Octree(midx,
-                //     //                                         midy,
-                //     //                                         midz,
-                //     //                                         bottomRightBack->x,
-                //     //                                         bottomRightBack->y,
-                //     //                                         bottomRightBack->z);
-                //     //     }
-                //     //     else if (pos == BottomLeftBack)
-                //     //     {
-                //     //         now->children[pos] = new Octree(topLeftFront->x,
-                //     //                                         midy,
-                //     //                                         midz,
-                //     //                                         midx,
-                //     //                                         bottomRightBack->y,
-                //     //                                         bottomRightBack->z);
-                //     //     }
-                //     // }
-                //     // if (now->children[pos]->topLeftFront == nullptr)
-                //     // {
-                //     //     std::cout << "None node" << std::endl;
-                //     //     break;
-                //     // }
-                //     // else
-                //     // {
-                //     //     now->children[pos]->insert(now->Parent_Points[i].x, now->Parent_Points[i].y, now->Parent_Points[i].z);
-                //     // }
-                //     now->children[pos]->Parent_Points.push_back(now->Parent_Points[i]);
-                //    //now->Parent_Points.erase(now->Parent_Points.begin() + i);
-                //    // Parent_Points.erase(remove(Parent_Points.begin(), Parent_Points.end(), Parent_Points[i]), Parent_Points.end());
-                // }
-                // else
-                // {
-                //     i++;
-                // }
             }
             //删除所有储存节点
             now->Parent_Points.clear();
@@ -335,7 +241,7 @@ public:
         if (x < topLeftFront->x || x > bottomRightBack->x || y < topLeftFront->y || y > bottomRightBack->y || z < topLeftFront->z || z > bottomRightBack->z)
         {
             cout << "Point is out of bound" << endl;
-            return 0;
+            return -1;
         }
         // Otherwise perform binary search
         // for each ordinate
@@ -382,7 +288,7 @@ public:
         return pos;
     }
 
-    vector<Point> retrieve(vector<Point> returnpoint, Point object)
+    vector<Point> retrieve(Point object)
     {
         // 输入一个点找到同一子节点下所有点
         // std::cout<<topLeftFront->x<<std::endl;
@@ -392,11 +298,26 @@ public:
 
         if (children[index]->topLeftFront != nullptr && index != -1)
         {
-            returnpoint = children[index]->retrieve(returnpoint, object);
+            return children[index]->retrieve(returnpoint, object);
         }
-        returnpoint.push_back(object); //!!!!
+        // returnpoint.push_back(object); //!!!!
         return returnpoint;
     }
+
+    double query_Min_Point(Point object, Point &min_point)
+    {
+        double dist = 1e10;
+        vector<Point> Min_Point = retrieve(object);
+        for(auto point : Min_Point) {
+            double x = *point.x, y = *point.y, z = *point.z;
+            if(dist > sqrt(pow(object.x-x, 2) + pow(object.y-y, 2) + pow(object.y-y, 2))){
+                dist = sqrt(pow(object.x-x, 2) + pow(object.y-y, 2) + pow(object.y-y, 2));
+                min_point = *point;
+            }
+        }
+        return dist;
+    }
+
 };
 
 // Driver code
@@ -434,6 +355,8 @@ int main()
 
     // cout << (tree.find(3.0, 4.0, 4.0)? "Found\n": "Not Found\n");
 
+
+
     // 树中查询节点，返回节点位置和周边节点
     //  for (int i = 0; i < Point_blade.size(); i++) {
     // 	 Return_Point.clear();
@@ -453,6 +376,7 @@ int main()
     // 	 std::cout << "min_dis " << min_dis << std::endl;
     // 	 std::cout << "min_point " << min_point.x << min_point.y << min_point.z << std::endl;
     //  }
+    
     system("pause");
     return 0;
 }
