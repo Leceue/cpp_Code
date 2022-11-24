@@ -113,7 +113,7 @@ public:
         double midy = (topLeftFront->y + bottomRightBack->y) / 2;
         double midz = (topLeftFront->z + bottomRightBack->z) / 2;
         children[pos]->children.assign(8, nullptr);
-        children[pos]->level = now_level+1;
+        children[pos]->level = now_level + 1;
         for (int i = TopLeftFront; i <= BottomLeftBack; ++i)
             children[pos]->children[i] = new Octree();
         if (pos == TopLeftFront)
@@ -195,7 +195,7 @@ public:
         int pos = -1;
         pos = getIndex(x, y, z);
         s++;
-        std::cout << s << std::endl;
+        // std::cout << s << std::endl;
 
         // 如果子节点非空，已经划分，则查找象限，继续递归调用   !!!!!pos,不是零
         if (children[pos]->topLeftFront != nullptr)
@@ -294,14 +294,13 @@ public:
         // std::cout<<topLeftFront->x<<std::endl;
         int index = -1;
         index = getIndex(object.x, object.y, object.z);
-        // getIndex后children会发生变化，已变成子节点，像指针动态变化
 
         if (children[index]->topLeftFront != nullptr && index != -1)
         {
-            return children[index]->retrieve(returnpoint, object);
+            return children[index]->retrieve(object);
         }
         // returnpoint.push_back(object); //!!!!
-        return returnpoint;
+        return children[index]->Parent_Points;
     }
 
     double query_Min_Point(Point object, Point &min_point)
@@ -309,21 +308,21 @@ public:
         double dist = 1e10;
         vector<Point> Min_Point = retrieve(object);
         for(auto point : Min_Point) {
-            double x = *point.x, y = *point.y, z = *point.z;
+            double x = point.x, y = point.y, z = point.z;
             if(dist > sqrt(pow(object.x-x, 2) + pow(object.y-y, 2) + pow(object.y-y, 2))){
                 dist = sqrt(pow(object.x-x, 2) + pow(object.y-y, 2) + pow(object.y-y, 2));
-                min_point = *point;
+                min_point = point;
             }
+            printf("(%lf, %lf, %lf), %lf\n", x, y, z, sqrt(pow(object.x-x, 2) + pow(object.y-y, 2) + pow(object.y-y, 2)));
         }
         return dist;
     }
-
 };
 
 // Driver code
 int main()
 {
-    Octree tree(1, 1, 1, 5, 5, 5);
+    Octree tree(0, 0, 0, 10, 10, 10);
     double m = 2, n = 3, q = 4, min_dis = 100;
     vector<Point> Point_blade, Return_Point;
     Point a1, a2, a3, a4;
@@ -335,48 +334,26 @@ int main()
     // Point_blade.push_back(a1); Point_blade.push_back(a2);
     // Point_blade.push_back(a3); Point_blade.push_back(a4);
 
-    for (double i = 1.1; i < 5; i = i + 1)
+    for (double i = 1; i <= 5; i = i + 0.01)
     {
-        for (double j = 1.1; j < 5; j = j + 1)
+        for (double j = 1; j <= 5; j = j + 0.01)
         {
-            for (double k = 1.1; k < 5; k = k + 1)
+            for (double k = 1; k <= 5; k = k + 0.01)
             {
-                Point_blade.push_back(Point(i, j, k));
+                tree.insert(i, j, k);
             }
         }
     }
 
-    // 树中插入节点
-    for (int i = 0; i < Point_blade.size(); i++)
-    {
-        tree.insert(Point_blade[i].x, Point_blade[i].y, Point_blade[i].z);
-        std::cout << Point_blade[i].x << " " << Point_blade[i].y << " " << Point_blade[i].z << std::endl;
+    while(1){
+        printf("请输入一个坐标: ");
+        double x,y,z;
+        scanf("%lf,%lf,%lf",&x,&y,&z);
+        Point point;
+        double que = tree.query_Min_Point(Point(x, y, z), point);
+        printf("最近距离是: %lf, 最近点的坐标是:(%lf, %lf, %lf)\n",que, point.x, point.y, point.z);
     }
 
-    // cout << (tree.find(3.0, 4.0, 4.0)? "Found\n": "Not Found\n");
-
-
-
-    // 树中查询节点，返回节点位置和周边节点
-    //  for (int i = 0; i < Point_blade.size(); i++) {
-    // 	 Return_Point.clear();
-    // 	 Return_Point=tree.retrieve(Return_Point, Point_blade[i]);
-
-    // 	 for (int j = 0; j < Return_Point.size(); j++) {
-    // 		 if (Return_Point[j]!= Point_blade[i])
-    // 		 {
-    // 			 double distance = pow((Return_Point[j].x - Point_blade[i].x), 2) + pow((Return_Point[j].y - Point_blade[i].y), 2) + pow((Return_Point[j].z - Point_blade[i].z), 2);
-    // 			 if (distance < min_dis)
-    // 			 {
-    // 				 min_dis = distance;
-    // 				 min_point = Return_Point[j];
-    // 			 }
-    // 		 }
-    // 	 }
-    // 	 std::cout << "min_dis " << min_dis << std::endl;
-    // 	 std::cout << "min_point " << min_point.x << min_point.y << min_point.z << std::endl;
-    //  }
-    
     system("pause");
     return 0;
 }
